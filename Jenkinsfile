@@ -14,16 +14,15 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                sh """
-                    echo "=== Building Docker image in minikube ==="
-                    eval \$(minikube docker-env)   # используем Docker демона minikube
-                    docker build -t $IMAGE_NAME:$IMAGE_TAG .
-                    docker images
-                """
-            }
+    stage('Build Docker Image') {
+        steps {
+            sh """
+                echo "=== Building Docker image ==="
+                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                docker images
+            """
         }
+    }
 
         stage('Test Container') {
             steps {
