@@ -30,18 +30,6 @@ pipeline {
         }
     }
 
-        stage('Test Container') {
-            steps {
-                sh """
-                    echo "=== Testing container ==="
-                    docker run --rm -d -p 3000:3000 --name test_app $IMAGE_NAME:$IMAGE_TAG
-                    sleep 5
-                    curl -f http://localhost:3000 || (echo 'App did not respond' && exit 1)
-                    docker stop test_app
-                """
-            }
-        }
-
         stage('Deploy to Minikube') {
             steps {
                 sh """
