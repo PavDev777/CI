@@ -20,7 +20,6 @@ pipeline {
         steps {
             sh """
                 echo "=== Building Docker image ==="
-                eval \$(minikube docker-env)   # подключаем Docker minikube
                 export DOCKER_TLS_VERIFY="1"
                 export DOCKER_HOST="tcp://192.168.49.2:2376"
                 export DOCKER_CERT_PATH="/home/pavel/.minikube/certs"
