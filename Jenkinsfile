@@ -5,6 +5,8 @@ pipeline {
         IMAGE_NAME = "myapp"
         IMAGE_TAG = "latest"
         KUBE_NAMESPACE = "default"
+        KUBECONFIG = "/var/lib/jenkins/.kube/config"
+        MINIKUBE_HOME = "/var/lib/jenkins/.minikube"
     }
 
     stages {
