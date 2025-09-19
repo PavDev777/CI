@@ -1,65 +1,56 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    IMAGE_NAME = "myapp"
-    IMAGE_TAG = "latest"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        // клонируем код из SCM
-        checkout scm
-      }
+    environment {
+        IMAGE_NAME = "myapp"
+        IMAGE_TAG = "latest"
+        KUBE_NAMESPACE = "default"
     }
 
-    stage('Build Docker Image') {
-      steps {
-        script {
-          sh """
-            echo "Building Docker image..."
-            docker build -t $IMAGE_NAME:$IMAGE_TAG .
-          """
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
         }
-      }
-    }
 
-    stage('Test Container') {
-      steps {
-        script {
-          sh """
-            echo "Running container test..."
-            docker run --rm -d -p 3000:3000 --name test_app $IMAGE_NAME:$IMAGE_TAG
-            sleep 5
-            curl -f http://localhost:3000 || (echo 'App did not respond' && exit 1)
-            docker stop test_app
-          """
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                    echo "=== Building Docker image in minikube ==="
+                    eval \$(minikube docker-env)   # используем Docker демона minikube
+                    docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                    docker images
+                """
+            }
         }
-      }
-    }
 
-    stage('Push to Registry (optional)') {
-      when { expression { return false } } // отключено пока
-      steps {
-        script {
-          sh """
-            echo "Login to registry..."
-            docker login -u \$DOCKER_USER -p \$DOCKER_PASS
-            docker tag $IMAGE_NAME:$IMAGE_TAG my-dockerhub-user/$IMAGE_NAME:$IMAGE_TAG
-            docker push my-dockerhub-user/$IMAGE_NAME:$IMAGE_TAG
-          """
+        stage('Test Container') {
+            steps {
+                sh """
+                    echo "=== Testing container ==="
+                    docker run --rm -d -p 3000:3000 --name test_app $IMAGE_NAME:$IMAGE_TAG
+                    sleep 5
+                    curl -f http://localhost:3000 || (echo 'App did not respond' && exit 1)
+                    docker stop test_app
+                """
+            }
         }
-      }
-    }
-  }
 
-  post {
-    success {
-      echo "✅ Build & test completed successfully!"
+        stage('Deploy to Minikube') {
+            steps {
+                sh """
+                    echo "=== Deploying to minikube ==="
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
+                    kubectl get pods -n $KUBE_NAMESPACE
+                """
+            }
+        }
     }
-    failure {
-      echo "❌ Build failed!"
+
+    post {
+        success { echo "✅ Pipeline finished successfully!" }
+        failure { echo "❌ Pipeline failed!" }
     }
-  }
 }
