@@ -20,8 +20,8 @@ pipeline {
         steps {
             sh """
                 echo "=== Building Docker image ==="
-                eval \$(minikube docker-env)   # подключаем Docker minikube
-                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                eval $(minikube docker-env)
+                docker build -t myapp:latest .
                 docker images
             """
         }
