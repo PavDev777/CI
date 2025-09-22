@@ -38,6 +38,7 @@ pipeline {
                     sh "kubectl apply -f k8s/mysql-service.yaml"
                     sh "kubectl apply -f k8s/phpmyadmin-deployment.yaml"
                     sh "kubectl apply -f k8s/phpmyadmin-service.yaml"
+                    sh "kubectl get pods"
                 }
             }
         }
