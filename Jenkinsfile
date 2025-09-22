@@ -1,49 +1,59 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME = "myapp"
-        IMAGE_TAG = "latest"
-        KUBE_NAMESPACE = "default"
-        KUBECONFIG = "/var/lib/jenkins/.kube/config"
-        MINIKUBE_HOME = "/var/lib/jenkins/.minikube"
+  environment {
+    MINIKUBE_HOME = "/var/lib/jenkins/.minikube"
+    KUBECONFIG = "/var/lib/jenkins/.kube/config"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-    stage('Build Docker Image') {
-        steps {
-            sh """
-                echo "=== Building Docker image ==="
-                export DOCKER_TLS_VERIFY="1"
-                export DOCKER_HOST="tcp://192.168.49.2:2376"
-                export DOCKER_CERT_PATH="/home/pavel/.minikube/certs"
-                export MINIKUBE_ACTIVE_DOCKERD="minikube"
-                docker build -t $IMAGE_NAME:$IMAGE_TAG .
-                docker images
-            """
-        }
+    stage('Build MySQL Image') {
+      steps {
+        sh '''
+          export MINIKUBE_HOME=${MINIKUBE_HOME}
+          eval $(minikube docker-env --shell bash)
+          docker build -t mysql:latest ./mysql
+        '''
+      }
     }
 
-        stage('Deploy to Minikube') {
-            steps {
-                sh """
-                    echo "=== Deploying to minikube ==="
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                    kubectl get pods -n $KUBE_NAMESPACE
-                """
-            }
-        }
+    stage('Build phpMyAdmin Image') {
+      steps {
+        sh '''
+          export MINIKUBE_HOME=${MINIKUBE_HOME}
+          eval $(minikube docker-env --shell bash)
+          docker build -t phpmyadmin:latest ./phpmyadmin
+        '''
+      }
     }
 
-    post {
-        success { echo "✅ Pipeline finished successfully!" }
-        failure { echo "❌ Pipeline failed!" }
+    stage('Deploy to Minikube') {
+      steps {
+        sh '''
+          export KUBECONFIG=${KUBECONFIG}
+          kubectl apply -f k8s/mysql-deployment.yaml
+          kubectl apply -f k8s/mysql-service.yaml
+          kubectl apply -f k8s/phpmyadmin-deployment.yaml
+          kubectl apply -f k8s/phpmyadmin-service.yaml
+          kubectl rollout status deployment/mysql
+          kubectl rollout status deployment/phpmyadmin
+        '''
+      }
     }
+  }
+
+  post {
+    success {
+      echo "✅ CI/CD pipeline finished successfully!"
+    }
+    failure {
+      echo "❌ Pipeline failed!"
+    }
+  }
 }
