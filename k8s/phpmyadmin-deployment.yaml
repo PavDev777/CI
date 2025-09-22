@@ -20,3 +20,5 @@ spec:
         env:
         - name: PMA_HOST
           value: "mysql"
+        - name: PMA_PORT
+          value: "3306"
