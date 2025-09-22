@@ -33,7 +33,7 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withFile([file: KUBECONFIG_FILE, variable: 'KUBECONFIG']) {
+                configFileProvider([configFile(fileId: 'kubeconfig-file', variable: 'KUBECONFIG')]) {
                     sh "kubectl apply -f k8s/mysql-deployment.yaml"
                     sh "kubectl apply -f k8s/mysql-service.yaml"
                     sh "kubectl apply -f k8s/phpmyadmin-deployment.yaml"
