@@ -14,10 +14,9 @@ spec:
     spec:
       containers:
       - name: phpmyadmin
-        image: phpmyadmin:latest
-        imagePullPolicy: Never
-        env:
-        - name: PMA_HOST
-          value: mysql
+        image: pavel/mysql-demo-phpmyadmin:latest
         ports:
         - containerPort: 80
+        env:
+        - name: PMA_HOST
+          value: "mysql"

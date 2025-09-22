@@ -1,61 +1,51 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    MINIKUBE_HOME = "/var/lib/jenkins/.minikube"
-    KUBECONFIG = "/var/lib/jenkins/.kube/config"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    environment {
+        DOCKERHUB_CREDS = credentials('dockerhub_creds')
+        KUBECONFIG_FILE = credentials('kubeconfig')
+        MYSQL_IMAGE = "pavdev777/mysql-demo"
+        PHPMYADMIN_IMAGE = "pavdev777/mysql-demo-phpmyadmin"
+        TAG = "latest"
     }
 
-    stage('Build MySQL Image') {
-      steps {
-        sh '''
-          export MINIKUBE_HOME=${MINIKUBE_HOME}
-          eval $(minikube docker-env --shell bash)
-          docker build -t mysql:latest ./mysql
-          minikube image load mysql:latest
-        '''
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Images') {
+            steps {
+                sh "docker build -t ${MYSQL_IMAGE}:${TAG} -f Dockerfile.mysql ."
+                sh "docker build -t ${PHPMYADMIN_IMAGE}:${TAG} -f Dockerfile.phpmyadmin ."
+            }
+        }
+
+        stage('Push Images') {
+            steps {
+                sh "echo ${DOCKERHUB_CREDS_PSW} | docker login -u ${DOCKERHUB_CREDS_USR} --password-stdin"
+                sh "docker push ${MYSQL_IMAGE}:${TAG}"
+                sh "docker push ${PHPMYADMIN_IMAGE}:${TAG}"
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withFile([file: KUBECONFIG_FILE, variable: 'KUBECONFIG']) {
+                    sh "kubectl apply -f k8s/mysql-deployment.yaml"
+                    sh "kubectl apply -f k8s/mysql-service.yaml"
+                    sh "kubectl apply -f k8s/phpmyadmin-deployment.yaml"
+                    sh "kubectl apply -f k8s/phpmyadmin-service.yaml"
+                }
+            }
+        }
     }
 
-    stage('Build phpMyAdmin Image') {
-      steps {
-        sh '''
-          export MINIKUBE_HOME=${MINIKUBE_HOME}
-          eval $(minikube docker-env --shell bash)
-          docker build -t phpmyadmin:latest ./phpmyadmin
-          minikube image load phpmyadmin:latest
-        '''
-      }
+    post {
+        always {
+            echo "Pipeline finished"
+        }
     }
-
-    stage('Deploy to Minikube') {
-      steps {
-        sh '''
-          export KUBECONFIG=${KUBECONFIG}
-          kubectl apply -f k8s/mysql-deployment.yaml
-          kubectl apply -f k8s/mysql-service.yaml
-          kubectl apply -f k8s/phpmyadmin-deployment.yaml
-          kubectl apply -f k8s/phpmyadmin-service.yaml
-          kubectl rollout status deployment/mysql
-          kubectl rollout status deployment/phpmyadmin
-        '''
-      }
-    }
-  }
-
-  post {
-    success {
-      echo "✅ CI/CD pipeline finished successfully!"
-    }
-    failure {
-      echo "❌ Pipeline failed!"
-    }
-  }
 }

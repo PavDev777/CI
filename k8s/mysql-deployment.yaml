@@ -14,12 +14,15 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: mysql:latest
-        imagePullPolicy: Never
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: root
-        - name: MYSQL_DATABASE
-          value: testdb
+        image: pavel/mysql-demo-mysql:latest
         ports:
         - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword"
+        - name: MYSQL_DATABASE
+          value: "mydb"
+        - name: MYSQL_USER
+          value: "user"
+        - name: MYSQL_PASSWORD
+          value: "password"
