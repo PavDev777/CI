@@ -19,6 +19,7 @@ pipeline {
           export MINIKUBE_HOME=${MINIKUBE_HOME}
           eval $(minikube docker-env --shell bash)
           docker build -t mysql:latest ./mysql
+          minikube image load mysql:latest
         '''
       }
     }
@@ -29,6 +30,7 @@ pipeline {
           export MINIKUBE_HOME=${MINIKUBE_HOME}
           eval $(minikube docker-env --shell bash)
           docker build -t phpmyadmin:latest ./phpmyadmin
+          minikube image load phpmyadmin:latest
         '''
       }
     }
