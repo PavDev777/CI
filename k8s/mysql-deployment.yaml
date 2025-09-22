@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: pavel/mysql-demo-mysql:latest
+        image: pavdev777/mysql-demo:latest
         ports:
         - containerPort: 3306
         env:
