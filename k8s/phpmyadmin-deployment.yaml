@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: phpmyadmin
-        image: pavdev777/mysql-demo-phpmyadmin:arm64
+        image: pavdev777/mysql-demo-phpmyadmin:latest
         ports:
         - containerPort: 80
         env:

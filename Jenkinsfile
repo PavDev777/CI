@@ -18,9 +18,8 @@ pipeline {
 
         stage('Build Images') {
             steps {
-                sh "docker buildx create --use"
-                sh "docker buildx build --platform linux/arm64 -t ${MYSQL_IMAGE}:${TAG}:arm64 -f Dockerfile.mysql --push ."      
-                sh "docker buildx build --platform linux/arm64 -t ${PHPMYADMIN_IMAGE}:${TAG}:arm64 -f Dockerfile.phpmyadmin --push ."
+                sh "docker build -t ${MYSQL_IMAGE}:${TAG} -f Dockerfile.mysql ."
+                sh "docker build -t ${PHPMYADMIN_IMAGE}:${TAG} -f Dockerfile.phpmyadmin ."
             }
         }
 
